@@ -32,7 +32,7 @@ This project demonstrates how to bridge Google Workspace (Sheets, Apps Script) w
    * Select **Time-driven** for the event source, choose **Day timer**, and pick your preferred time window.
 
 ## Token Economics 🪙
-This script is optimized for token economics. By using regex to extract only the `<body>` content and stripping away HTML tags, the prompt size is significantly reduced. Combined with the high rate limits and free tier of **Gemini 1.5 Flash**, this scraper can run daily at scale without incurring API costs.
+This script is optimized for token economics. By using regex to extract only the `<body>` content and stripping away HTML tags, the prompt size is significantly reduced. Combined with the high rate limits and free tier of **Gemini 3.6 Flash**, this scraper can run daily at scale without incurring API costs.
 
 ## License
 MIT License
