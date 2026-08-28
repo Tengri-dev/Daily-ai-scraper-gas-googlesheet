@@ -1,13 +1,13 @@
 # Gemini-Powered Daily Web Scraper 🤖📊
 
-An automated Google Apps Script that scrapes a target webpage daily, analyzes its content using the **Gemini 1.5 Flash API**, and logs a summarized output directly into Google Sheets. 
+An automated Google Apps Script that scrapes a target webpage daily, analyzes its content using the **Gemini 3.6 Flash API**, and logs a summarized output directly into Google Sheets. 
 
-This project demonstrates how to bridge Google Workspace (Sheets, Apps Script) with modern Google AI capabilities, utilizing the generous free tier of Gemini 1.5 Flash for cost-effective automation. It serves as an excellent reference for integrating lightweight AI workflows into everyday developer tools.
+This project demonstrates how to bridge Google Workspace (Sheets, Apps Script) with modern Google AI capabilities, utilizing the generous free tier of Gemini 3.6 Flash for cost-effective automation. It serves as an excellent reference for integrating lightweight AI workflows into everyday developer tools.
 
 ## Features
 * **Automated Daily Scraping:** Uses Apps Script Time-driven triggers to run without manual intervention.
 * **Smart Context Extraction:** Strips heavy HTML tags and truncates content to optimize LLM token usage.
-* **AI Summarization:** Leverages Gemini 1.5 Flash to understand webpage context and generate concise summaries.
+* **AI Summarization:** Leverages Gemini 3.6 Flash to understand webpage context and generate concise summaries.
 * **Zero-Cost Architecture:** Designed to operate well within the free tier limits of Google AI Studio.
 
 ## Setup Instructions
