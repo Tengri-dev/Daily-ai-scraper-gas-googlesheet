@@ -1,60 +1,88 @@
 /**
- * Gemini-Powered Daily Web Scraper
- * 
- * This script fetches a target webpage, extracts its text, and sends it to 
- * the Gemini 1.5 Flash API for summarization. The result is logged into the 
- * active Google Sheet.
+ * Daily YC Launch Tracker with Apps Script & Gemini
+ * Scrapes Y Combinator's launch feed, extracts top recent launches,
+ * and logs structured company intelligence directly into Google Sheets.
  */
-
-function scrapeAndAnalyzeDaily() {
+function trackYCLaunchesDaily() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const url = "http://url.com/"; // Replace with your target URL
+  const url = "https://www.ycombinator.com/launches";
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
- 
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY not found in Script Properties.");
+  }
+
   try {
-    // 1. Fetch the website content
-    const response = UrlFetchApp.fetch(url);
+    // 1. Fetch YC Launches HTML
+    const response = UrlFetchApp.fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AppsScriptYCScraper/1.0)" }
+    });
     const html = response.getContentText();
- 
-    // Light cleanup to extract the body text for the prompt
-    const bodyMatch = html.match(/<body[^>]*>([\w|\W]*)<\/body>/i);
-    const rawText = bodyMatch ? bodyMatch[1].replace(/<[^>]+>/g, '').substring(0, 3000) : html.substring(0, 3000);
- 
-    // 2. Call the Gemini API
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+
+    // 2. Light cleanup to strip script/style tags and compress text for token efficiency
+    const cleanHtml = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ');
+
+    const pageSnippet = cleanHtml.substring(0, 8000);
+
+    // 3. Call Gemini Interactions API with structured JSON output request
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${apiKey}`;
+    const prompt = `Analyze this raw text from Y Combinator's launches page. Extract the latest 3 to 5 featured startup launches from the past 30 days.
+Return ONLY a valid JSON array of objects with the following keys:
+- "name": Company name
+- "pitch": One-sentence value proposition
+- "category": Target domain/industry (e.g., Developer Tools, Fintech, Healthcare, B2B SaaS)
+- "isAiNative": "Yes" or "No"
+
+Raw Text:
+${pageSnippet}`;
+
     const payload = {
-      "contents": [{
-        "parts": [{"text": `Summarize the core topic of this webpage in one short sentence: ${rawText}`}]
-      }]
+      "model": "gemini-3.7-flash",
+      "input": prompt,
+      "response_mime_type": "application/json"
     };
- 
+
     const options = {
       'method': 'post',
       'contentType': 'application/json',
       'payload': JSON.stringify(payload),
       'muteHttpExceptions': true
     };
- 
-const geminiResponse = UrlFetchApp.fetch(geminiUrl, options);
+
+    const geminiResponse = UrlFetchApp.fetch(geminiUrl, options);
     const data = JSON.parse(geminiResponse.getContentText());
-    
-    // DEBUG: Print the raw API response to the Apps Script Execution Log
-    Logger.log(JSON.stringify(data, null, 2));
-    
-    // Extract the AI response or the specific API error
-    let summary = "Summary not found";
-    
+
     if (data.error) {
-      summary = "API Error: " + data.error.message; // Logs the exact issue to your sheet
-    } else if (data.candidates && data.candidates.length > 0) {
-      summary = data.candidates[0].content.parts[0].text.trim();
-    } else if (data.promptFeedback) {
-      summary = "Blocked by safety settings: " + data.promptFeedback.blockReason;
+      sheet.appendRow([new Date(), "API Error", data.error.message, "", ""]);
+      return;
     }
- 
-    // 3. Log the timestamp, URL, and AI summary
-    sheet.appendRow([new Date(), url, summary]);
+
+    const outputText = data.output_text || (data.candidates && data.candidates[0]?.content?.parts[0]?.text);
+    if (!outputText) {
+      sheet.appendRow([new Date(), "Parse Error", "No output returned from Gemini", "", ""]);
+      return;
+    }
+
+    // 4. Parse the AI-generated JSON and append each company as a row
+    const cleanJson = outputText.replace(/```json|```/g, '').trim();
+    const startups = JSON.parse(cleanJson);
+
+    const timestamp = new Date();
+    startups.forEach(startup => {
+      sheet.appendRow([
+        timestamp,
+        startup.name || "N/A",
+        startup.pitch || "N/A",
+        startup.category || "N/A",
+        startup.isAiNative || "N/A"
+      ]);
+    });
+
   } catch (error) {
-    sheet.appendRow([new Date(), url, "Error: " + error.message]);
+    sheet.appendRow([new Date(), "Execution Error", error.message, "", ""]);
   }
 }
