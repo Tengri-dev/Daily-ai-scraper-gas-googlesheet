@@ -70,6 +70,9 @@ This project implements a multi-step pre-filter in Apps Script:
 3. Bounds the extracted snippet size to retain maximum context while preserving prompt budget within the free API limits.
 
 ---
+## Resources
+Dev.to Article: https://dev.to/tengri_dev/track-yc-launches-on-autopilot-apps-script-gemini-36-flash-3fhj
+Youtube tutorial https://www.youtube.com/watch?v=JQOSm3Xal8Q
 
 ## License
 
